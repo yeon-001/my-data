@@ -11,7 +11,6 @@ st.set_page_config(
     layout="wide"
 )
 
-# 데이터 주소
 DATA_URL = "https://raw.githubusercontent.com/greatsong/modudata/main/data/seoul.csv"
 
 
@@ -21,14 +20,12 @@ DATA_URL = "https://raw.githubusercontent.com/greatsong/modudata/main/data/seoul
 
 @st.cache_data
 def load_data():
-    """서울 기온 데이터를 불러옵니다."""
-    
     df = pd.read_csv(DATA_URL)
 
     # 날짜 변환
     df["날짜"] = pd.to_datetime(df["날짜"])
 
-    # 기온 열을 숫자로 변환
+    # 기온 열 숫자로 변환
     for column in ["평균기온", "최저기온", "최고기온"]:
         df[column] = pd.to_numeric(
             df[column],
@@ -97,7 +94,7 @@ st.caption(
 
 
 # --------------------------------
-# 기본 정보
+# 데이터 기본 정보
 # --------------------------------
 
 st.subheader("📊 데이터 기본 정보")
@@ -131,16 +128,16 @@ with col4:
 
 # --------------------------------
 # 기온 요약통계
+# 행과 열을 바꾼 형태
 # --------------------------------
 
 st.subheader("📋 원본 데이터 기온 요약통계")
 
 st.markdown(
     "원본 일별 기온 데이터의 "
-    "**개수, 평균, 표준편차, 최소값, 사분위수, 중앙값, 최대값**을 보여줍니다."
+    "**개수, 평균, 표준편차, 최소값, 사분위수, 중앙값, 최대값**입니다."
 )
 
-# 요약통계 계산
 summary = df[
     ["평균기온", "최저기온", "최고기온"]
 ].describe()
@@ -159,14 +156,13 @@ summary = summary.rename(
     }
 )
 
-# 열 이름 설정
+# 기온 종류를 열로 설정
 summary.columns = [
     "평균기온",
     "최저기온",
     "최고기온"
 ]
 
-# 소수점 정리
 summary = summary.round(2)
 
 st.dataframe(
@@ -181,18 +177,26 @@ st.dataframe(
 
 st.subheader("📍 지점 요약통계")
 
+# 지점별 관측 건수
+station_counts = df["지점"].value_counts()
+
+# 지점 요약통계
 station_summary = pd.DataFrame({
     "항목": [
         "전체 관측 건수",
         "고유 지점 수",
         "가장 많이 기록된 지점",
-        "가장 많이 기록된 지점의 관측 건수"
+        "가장 많이 기록된 지점의 관측 건수",
+        "가장 적게 기록된 지점",
+        "가장 적게 기록된 지점의 관측 건수"
     ],
     "값": [
         f"{df['지점'].count():,}건",
         f"{df['지점'].nunique():,}개",
-        str(df["지점"].mode().iloc[0]),
-        f"{df['지점'].value_counts().iloc[0]:,}건"
+        str(station_counts.index[0]),
+        f"{station_counts.iloc[0]:,}건",
+        str(station_counts.index[-1]),
+        f"{station_counts.iloc[-1]:,}건"
     ]
 })
 
@@ -209,26 +213,26 @@ st.dataframe(
 
 with st.expander("📍 지점별 관측 건수 보기"):
 
-    station_counts = (
+    station_table = (
         df["지점"]
         .value_counts()
         .reset_index()
     )
 
-    station_counts.columns = [
+    station_table.columns = [
         "지점",
         "관측 건수"
     ]
 
     st.dataframe(
-        station_counts,
+        station_table,
         use_container_width=True,
         hide_index=True
     )
 
 
 # --------------------------------
-# 연도별 평균기온 데이터
+# 연도별 평균기온
 # --------------------------------
 
 with st.expander("📅 연도별 평균기온 데이터 보기"):
